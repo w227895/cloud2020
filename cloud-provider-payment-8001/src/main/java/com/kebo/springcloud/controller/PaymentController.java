@@ -68,5 +68,15 @@ public class PaymentController {
     public String getPaymentLb(){
         return serverPort;
     }
+
+    @GetMapping("/payment/feign/timeout")
+    public String paymentFeignTimeout(){
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return serverPort;
+    }
 }
 
