@@ -4,11 +4,18 @@ import com.kebo.springcloud.entities.CommonResult;
 import com.kebo.springcloud.entities.Payment;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
+
+import com.kebo.springcloud.lb.LoadBalancer;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
+
+import java.net.URI;
+import java.util.List;
 
 /**
  * @description:
@@ -23,6 +30,10 @@ public class OrderController {
     public static final String PAYMENT_URL = "http://CLOUD-PAYMENT-SERVICE";
     @Autowired
     private RestTemplate restTemplate;
+    @Autowired
+    private LoadBalancer loadBalancer;
+    @Autowired
+    private DiscoveryClient discoveryClient;
 
     @GetMapping("/consumer/payment/create")
     public CommonResult<Payment> create(Payment payment) {
@@ -37,11 +48,22 @@ public class OrderController {
     @GetMapping("/consumer/payment/getFoEntity/{id}")
     public CommonResult<Payment> getFoEntity(@PathVariable("id") Long id) {
         ResponseEntity<CommonResult> forEntity = restTemplate.getForEntity(PAYMENT_URL + "/payment/get/" + id, CommonResult.class);
-        if(forEntity.getStatusCode().is2xxSuccessful()){
+        if (forEntity.getStatusCode().is2xxSuccessful()) {
             return forEntity.getBody();
-        }else {
-            return new CommonResult<>(444,"操作失败");
+        } else {
+            return new CommonResult<>(444, "操作失败");
         }
+    }
+
+    @GetMapping("/consumer/payment/lb")
+    public String getPaymentLB() {
+        List<ServiceInstance> instances = discoveryClient.getInstances("CLOUD-PAYMENT-SERVICE");
+        if (instances == null || instances.size() <= 0) {
+            return null;
+        }
+        ServiceInstance serviceInstance = loadBalancer.instances(instances);
+        URI uri = serviceInstance.getUri();
+        return restTemplate.getForObject(uri + "/payment/lb", String.class);
     }
 }
 
