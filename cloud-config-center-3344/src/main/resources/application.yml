@@ -15,7 +15,12 @@ spring:
             - springcloud-config
       ####读取分支
       label: main
-
+  rabbitmq:
+    host: 192.168.31.205
+    port: 5672
+    username: admin
+    password: 123456
+    virtual-host: my_vhost
 
 #服务注册到eureka地址
 eureka:
@@ -23,3 +28,9 @@ eureka:
     service-url:
       defaultZone: http://localhost:7001/eureka
 
+# 暴露监控端点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "bus-refresh"
